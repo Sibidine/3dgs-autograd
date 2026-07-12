@@ -1,3 +1,11 @@
 env/
 doctest-output
 __pycache__
+images
+*.bin
+*.zip
+3dgs.py 
+test_tensor.py 
+oracle.py
+.gitignore
+*.ply

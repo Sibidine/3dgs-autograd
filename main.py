@@ -76,12 +76,41 @@ class Value:
         out._backward = backward
         return out
 
+    def sigmoid(self):      
+        s = 1.0 / (1.0 + math.exp(-self.data))
+        out = Value(s, (self, ), 'sigmoid')
+        def backward():
+            self.grad += s*(1-s)*out.grad
+        out._backward = backward
+        return out
+
+    def sqrt(self):
+        out = self**0.5
+        def backward():
+            self.grad = 0.5*self**(-0.5)*out.grad 
+        out._backward = backward 
+        return out 
+
+    def relu(self):
+        out = Value(self.data if self.data > 0 else 0.0, (self,), 'relu')
+        def backward():
+             self.grad += (out.data > 0) * out.grad
+        out._backward = backward
+        return out
+
+    def __abs__(self):
+        out = Value(abs(self.data), (self,), 'abs')
+        def backward(): 
+            self.grad += (1.0 if self.data >= 0 else -1.0) * out.grad
+        out._backward = backward
+        return out
+
     def exp(self):
         x = self.data 
         out = Value(math.exp(x), (self, ), 'exp') 
 
         def backward():
-            self.grad +=  x * out.grad
+            self.grad +=  out.data * out.grad
         out._backward = backward
         return out
 
@@ -159,6 +188,20 @@ def test2():
 
     dot = draw_dot(o)
     dot.render(directory='doctest-output', view=True)
+
+
+def vdot(a, b):
+    return sum((ai*bi for ai, bi in zip(a, b)), Value(0.0))
+
+def matvec(M, v):
+   return [vdot(row, v) for row in M]
+
+def matmul(A, B):
+    Bt = list(zip(*B))
+    return [[vdot(r, c) for c in Bt] for r in A]
+
+def transpose(M):
+    return [list(r) for r in zip(*M)]
 
 # test2()
 
