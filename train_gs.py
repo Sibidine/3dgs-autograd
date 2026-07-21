@@ -15,8 +15,9 @@ end to end on your own autograd, not to produce a finished reconstruction.
 """
 import sys, struct, math
 import numpy as np
-from tensor import Tensor
+from tensor import Tensor, Adam
 from plyfile import PlyElement, PlyData
+from PIL import Image
 
 # ----------------------------------------------------------------------
 # config
@@ -107,28 +108,6 @@ class GaussianModel:
     def parameters(self):
         return [self.means, self.scales, self.quats, self.opacities, self.colors]
 
-# ======================================================================
-# 3. Adam  (operates only on .data / .grad arrays; never touches the graph)
-# ======================================================================
-class Adam:
-    def __init__(self, params, lr=1e-2, betas=(0.9, 0.999), eps=1e-8):
-        self.params = list(params)
-        self.lr, (self.b1, self.b2), self.eps = lr, betas, eps
-        self.t = 0
-        self.m = [np.zeros_like(p.data) for p in self.params]
-        self.v = [np.zeros_like(p.data) for p in self.params]
-    def step(self):
-        self.t += 1
-        for i, p in enumerate(self.params):
-            g = p.grad
-            self.m[i] = self.b1 * self.m[i] + (1 - self.b1) * g
-            self.v[i] = self.b2 * self.v[i] + (1 - self.b2) * (g * g)
-            mh = self.m[i] / (1 - self.b1 ** self.t)
-            vh = self.v[i] / (1 - self.b2 ** self.t)
-            p.data -= self.lr * mh / (np.sqrt(vh) + self.eps)
-    def zero_grad(self):
-        for p in self.params:
-            p.grad = np.zeros_like(p.data)
 
 # ======================================================================
 # 4. verified pipeline stages (Tensor engine)
@@ -248,7 +227,7 @@ def subsample(xyz, rgb, n, seed=SEED):
     return xyz[idx], rgb[idx]
 
 def load_image(path, size):        # size = (W, H)
-    from PIL import Image
+
     img = Image.open(path).convert("RGB").resize(size, Image.BILINEAR)
     return np.asarray(img, dtype=np.float64) / 255.0
 
