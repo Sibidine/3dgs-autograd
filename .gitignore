@@ -9,6 +9,5 @@ test_tensor.py
 oracle.py
 main.py
 neuron.py
-.gitignore
 *.ply
 
