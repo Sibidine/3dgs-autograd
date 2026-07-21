@@ -10,4 +10,5 @@ oracle.py
 main.py
 neuron.py
 *.ply
+.gitignore
 
